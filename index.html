@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>한동하 키우기 시즌2</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="한동하 키우기 시즌2">
+<meta property="og:description" content="동하의 저녁을 사수하라">
+<meta property="og:image" content="preview.png">
+
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%;
+    height: 100vh; height: 100dvh;
+    background: #1b1b1f; overflow: hidden;
+    font-family: 'Malgun Gothic', sans-serif;
+    user-select: none; touch-action: manipulation;
+  }
+  #app {
+    width: 100%; max-width: 480px; margin: 0 auto;
+    height: 100%; display: flex; flex-direction: column;
+    position: relative; background: #fff; overflow: hidden;
+  }
+
+  /* ===== 로그인 화면 ===== */
+  #login-screen {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(160deg,#3e2723,#6d4c41 60%,#8d6e63);
+    color: #fff; padding: 24px; text-align: center;
+  }
+  #login-screen h1 { font-size: 22px; margin-bottom: 4px; }
+  #login-screen p.sub { font-size: 12px; opacity: 0.8; margin-bottom: 20px; }
+  #login-screen input {
+    width: 80%; max-width: 260px; padding: 12px; margin-bottom: 10px;
+    border-radius: 8px; border: none; font-size: 15px; text-align: center;
+  }
+  #login-btn {
+    width: 80%; max-width: 260px; padding: 13px; margin-top: 8px;
+    border: none; border-radius: 8px; background: #ff7043; color: #fff;
+    font-weight: 900; font-size: 15px; box-shadow: 0 4px 0 #bf360c;
+  }
+  #login-btn:active { transform: translateY(4px); box-shadow: none; }
+  #login-error { color: #ffab91; font-size: 12px; margin-top: 10px; min-height: 16px; }
+  #version-tag { position: absolute; bottom: 8px; right: 12px; font-size: 10px; color: rgba(255,255,255,0.45); }
+
+  /* ===== 게임 화면 ===== */
+  #game-screen { flex: 1; display: none; flex-direction: column; position: relative; }
+
+  #hud {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: #263238; color: #fff; font-size: 12px; font-weight: 700;
+    z-index: 30;
+  }
+  #hud .coin-box { color: #ffca28; flex-shrink: 0; }
+  #fat-bar-wrap { flex: 1; min-width: 30px; height: 12px; background: #37474f; border-radius: 6px; overflow: hidden; border: 1px solid #546e7a; }
+  #fat-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#ffb300,#e53935); transition: width 0.2s; }
+  #hud-best { flex-shrink: 0; white-space: nowrap; }
+  #settings-open-btn {
+    flex-shrink: 0; background: #546e7a; color: #fff; border: none; border-radius: 14px;
+    width: 26px; height: 26px; font-size: 13px; box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+  }
+  #rank-open-btn {
+    flex-shrink: 0; background: #ffb74d; color: #3e2723; border: none; border-radius: 14px;
+    padding: 5px 12px; font-size: 11px; font-weight: 900; box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+  }
+
+  #speech-bubble {
+    margin: 6px 10px 0 10px; background: #fff59d; border: 2px solid #f9a825; border-radius: 12px;
+    padding: 8px 10px; font-size: 12px; font-weight: 800; text-align: center; color: #333;
+    min-height: 16px; z-index: 30; position: relative;
+  }
+
+  #board {
+    flex: 1; position: relative; overflow: hidden; margin-top: 6px;
+  }
+  #bg-restaurant {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 12%, rgba(255,224,178,0.65), transparent 42%),
+      radial-gradient(circle at 80% 8%, rgba(255,224,178,0.55), transparent 38%),
+      linear-gradient(90deg, rgba(0,0,0,0.4) 0%, transparent 12%, transparent 88%, rgba(0,0,0,0.4) 100%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 36px),
+      linear-gradient(180deg, #4e342e 0%, #6d4c41 45%, #3e2723 100%);
+    filter: blur(1.4px);
+  }
+  #bg-restaurant::before, #bg-restaurant::after {
+    content:''; position:absolute; width: 72px; height: 72px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,240,200,0.8), transparent 70%);
+  }
+  #bg-restaurant::before { top: 8%; left: 12%; }
+  #bg-restaurant::after { top: 6%; right: 10%; }
+
+  #pig {
+    position: absolute; bottom: 27%; left: 50%;
+    width: 220px; height: 240px; z-index: 5;
+    transform: translateX(-50%) scale(2);
+    transform-origin: 50% 100%;
+  }
+  .pig-body { position:absolute; bottom:0; left:10px; width:200px; height:200px; background:#f8bbd0; border-radius:45% 45% 40% 40%; border:4px solid #f48fb1; box-shadow: inset -9px -9px 22px rgba(0,0,0,0.12); }
+  .pig-ear { position:absolute; top:-16px; width:52px; height:60px; background:#f48fb1; border-radius:50% 50% 0 0; border:4px solid #f06292; }
+  .pig-ear.left { left:24px; transform: rotate(-20deg); }
+  .pig-ear.right { right:24px; transform: rotate(20deg); }
+  .pig-snout { position:absolute; top:64px; left:56px; width:72px; height:52px; background:#f48fb1; border-radius:50%; border:4px solid #f06292; }
+  .pig-snout::before, .pig-snout::after { content:''; position:absolute; top:18px; width:14px; height:18px; background:#c2185b; border-radius:50%; }
+  .pig-snout::before { left:14px; } .pig-snout::after { right:14px; }
+  .pig-eye { position:absolute; top:44px; width:14px; height:14px; background:#333; border-radius:50%; }
+  .pig-eye.left { left:64px; } .pig-eye.right { right:64px; }
+  .pig-tongue {
+    position:absolute; top:112px; left:88px; width:24px; height:16px; background:#e91e63;
+    border-radius:0 0 16px 16px; transform-origin: top center;
+    animation: lick 2.6s ease-in-out infinite;
+  }
+  @keyframes lick { 0%,80%,100%{ transform: scaleY(0); } 90%{ transform: scaleY(1); } }
+  .pig-apron {
+    position:absolute; bottom:-8px; left:40px; width:140px; height:110px;
+    background:#eceff1; border:4px solid #90a4ae; border-radius: 12px 12px 40px 40px;
+  }
+  .pig-apron::before {
+    content:''; position:absolute; top:-28px; left:52px; width:36px; height:32px;
+    background:#eceff1; border:4px solid #90a4ae; border-radius: 8px;
+  }
+  #pig.dead .pig-eye { background: transparent; }
+  #pig.dead::after { content:'X X'; position:absolute; top:40px; left:52px; font-size:28px; font-weight:900; color:#333; z-index:6; letter-spacing:28px; }
+
+  #table {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 44%;
+    display: grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(3,1fr);
+    gap: 6px; padding: 8px; background: linear-gradient(180deg,#8d6e63,#5d4037);
+    border-top: 4px solid #4e342e;
+    z-index: 10;
+  }
+  .bowl {
+    position: relative; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #dfe3e6 75%);
+    border: 3px solid #b0bec5; box-shadow: inset 0 4px 6px rgba(0,0,0,0.18);
+  }
+
+  .food {
+    position: absolute; font-size: 66px; line-height: 1; z-index: 20;
+    filter: drop-shadow(0 3px 2px rgba(0,0,0,0.3));
+    transform: translate(-50%,-50%) scale(1);
+    transition: transform 0.12s;
+  }
+  .food.landed { cursor: pointer; }
+
+  .boss-food {
+    position: absolute; z-index: 25; text-align: center;
+    transform: translate(-50%,-50%);
+  }
+  .boss-food .emoji { display:block; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.4)); }
+  .boss-hpbar { width: 90px; height: 8px; background:#37474f; border-radius:4px; overflow:hidden; margin: 4px auto 0; border:1px solid #263238; }
+  .boss-hpbar-fill { height:100%; background: linear-gradient(90deg,#ff7043,#d84315); width:100%; }
+
+  @keyframes floatUp { 0%{ transform:translate(-50%,0); opacity:1;} 100%{ transform:translate(-50%,-46px); opacity:0;} }
+  .popup { position:absolute; font-weight:900; color:#ffab00; text-shadow:1px 1px 0 rgba(0,0,0,0.4); animation: floatUp 0.8s ease-out forwards; pointer-events:none; z-index:50; font-size:16px; }
+
+  @keyframes particleFly { 0%{ transform:translate(-50%,-50%) scale(1); opacity:1;} 100%{ transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2); opacity:0;} }
+  .particle { position:absolute; width:8px; height:8px; border-radius:50%; background:#ffca28; animation: particleFly 0.5s ease-out forwards; pointer-events:none; z-index:49; }
+
+  @keyframes shakeBoard { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-4px);} 75%{transform:translateX(4px);} }
+  .shake { animation: shakeBoard 0.22s; }
+
+  @keyframes missFlash { 0%{ opacity:0.45; } 100%{ opacity:0; } }
+  #flash-layer { position:absolute; inset:0; background:#e53935; pointer-events:none; opacity:0; z-index:60; }
+  #flash-layer.flash { animation: missFlash 0.3s ease-out; }
+
+  #shop-bar {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 5px;
+    padding: 6px; background: #37474f; z-index: 30;
+  }
+  #shop-bar button {
+    border: none; border-radius: 8px; padding: 6px 2px; font-size: 10px; font-weight: 800;
+    color: #fff; box-shadow: 0 3px 0 rgba(0,0,0,0.3); line-height: 1.4;
+  }
+  #shop-bar button:active { transform: translateY(3px); box-shadow: none; }
+  #shop-bar button:disabled { background:#607d8b !important; opacity:0.6; }
+  .shop-fatdown { background:#43a047; }
+  .shop-exposure { background:#1e88e5; }
+  .shop-coinup { background:#fb8c00; }
+  .shop-slow { background:#8e24aa; }
+
+  /* ===== 게임오버 / 랭킹 오버레이 ===== */
+  .overlay {
+    position: absolute; inset: 0; background: rgba(20,15,10,0.92); color: #fff;
+    display: none; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 100; padding: 24px; text-align: center;
+  }
+  .overlay.show { display: flex; }
+  .overlay h2 { font-size: 26px; color: #ff8a65; margin-bottom: 6px; }
+  .overlay .result-line { font-size: 14px; margin: 4px 0; }
+  .overlay .record-badge { color: #ffd54f; font-weight: 900; margin: 8px 0; font-size: 15px; }
+  .overlay button {
+    margin-top: 14px; padding: 12px 26px; border: none; border-radius: 8px;
+    font-weight: 900; font-size: 15px; color: #fff; background:#ff7043; box-shadow: 0 4px 0 #bf360c;
+  }
+  .overlay button:active { transform: translateY(4px); box-shadow: none; }
+  .overlay button.secondary { background:#546e7a; box-shadow: 0 4px 0 #263238; margin-left: 8px; }
+
+  #ranking-list { width: 100%; max-width: 280px; margin: 10px 0; max-height: 40vh; overflow-y: auto; text-align: left; }
+  #ranking-list .row { display:flex; justify-content:space-between; padding: 6px 10px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  #ranking-list .row.me { color: #ffd54f; font-weight: 900; }
+
+  #settings-nickname { font-size: 15px; font-weight: 900; margin-top: 8px; }
+  #settings-version { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  #sound-toggle-btn { background: #37474f !important; box-shadow: 0 3px 0 #1c262b !important; margin-top: 14px; }
+  #logout-btn { background: #d84315 !important; box-shadow: 0 4px 0 #8f2b0e !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 로그인 화면 -->
+  <div id="login-screen">
+    <h1>한동하 키우기 시즌2</h1>
+    <p class="sub">닉네임(한글)과 4자리 PIN을 입력해줘</p>
+    <input id="nickname-input" type="text" placeholder="닉네임 (한글 2~8자)" maxlength="8">
+    <input id="pin-input" type="tel" placeholder="PIN 4자리" maxlength="4" inputmode="numeric">
+    <button id="login-btn">시작하기</button>
+    <div id="login-error"></div>
+    <div id="version-tag"></div>
+  </div>
+
+  <!-- 게임 화면 -->
+  <div id="game-screen">
+    <div id="hud">
+      <span class="coin-box">💰 <span id="hud-coin">0</span></span>
+      <div id="fat-bar-wrap"><div id="fat-bar"></div></div>
+      <span id="hud-best">최고 0초</span>
+      <button id="settings-open-btn">⚙</button>
+      <button id="rank-open-btn">랭킹</button>
+    </div>
+
+    <div id="speech-bubble">동하가 노려보고 있다 꿀...</div>
+
+    <div id="board">
+      <div id="bg-restaurant"></div>
+      <div id="flash-layer"></div>
+      <div id="pig">
+        <div class="pig-ear left"></div><div class="pig-ear right"></div>
+        <div class="pig-body"></div>
+        <div class="pig-eye left"></div><div class="pig-eye right"></div>
+        <div class="pig-snout"></div>
+        <div class="pig-tongue"></div>
+        <div class="pig-apron"></div>
+      </div>
+      <div id="table"></div>
+    </div>
+
+    <div id="shop-bar">
+      <button class="shop-fatdown" id="btn-fatdown">🧊 지방감소<br><span id="cost-fatdown">80원</span></button>
+      <button class="shop-exposure" id="btn-exposure">⏱ 유예연장<br><span id="cost-exposure">120원</span></button>
+      <button class="shop-coinup" id="btn-coinup">🪙 코인증가<br><span id="cost-coinup">100원</span></button>
+      <button class="shop-slow" id="btn-slow">🐌 난이도둔화<br><span id="cost-slow">150원</span></button>
+    </div>
+  </div>
+
+  <!-- 게임오버 오버레이 -->
+  <div class="overlay" id="gameover-screen">
+    <h2 id="go-title">돼지 승리</h2>
+    <div class="result-line" id="go-result"></div>
+    <div class="result-line" id="go-best"></div>
+    <div class="record-badge" id="go-newrecord" style="display:none;">신기록 달성!</div>
+    <div>
+      <button id="restart-btn">다시하기</button>
+      <button class="secondary" id="go-rank-btn">랭킹보기</button>
+    </div>
+  </div>
+
+  <!-- 랭킹 오버레이 -->
+  <div class="overlay" id="ranking-screen">
+    <h2 style="font-size:20px;">랭킹</h2>
+    <div id="ranking-list"></div>
+    <button id="rank-close-btn">닫기</button>
+  </div>
+
+  <!-- 설정 오버레이 -->
+  <div class="overlay" id="settings-screen">
+    <h2 style="font-size:20px;">설정</h2>
+    <div id="settings-nickname"></div>
+    <div id="settings-version"></div>
+    <button id="sound-toggle-btn">사운드 끄기</button>
+    <div>
+      <button id="logout-btn">로그아웃</button>
+      <button class="secondary" id="settings-close-btn">닫기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var GAS_URL = "https://script.google.com/macros/s/AKfycbw20ef6eYIZvImDsC2Y13hAIHUhFQG30CtHclXZXxJolxJD5l8mo5g3dCjCM6eVDCVemQ/exec";
+  var APP_VERSION = "v1.3";
+
+  // ===== 요소 참조 =====
+  var loginScreen = document.getElementById('login-screen');
+  var gameScreen = document.getElementById('game-screen');
+  var nicknameInput = document.getElementById('nickname-input');
+  var pinInput = document.getElementById('pin-input');
+  var loginBtn = document.getElementById('login-btn');
+  var loginError = document.getElementById('login-error');
+
+  var hudCoin = document.getElementById('hud-coin');
+  var hudBest = document.getElementById('hud-best');
+  var fatBar = document.getElementById('fat-bar');
+  var speechBubble = document.getElementById('speech-bubble');
+  var board = document.getElementById('board');
+  var pigEl = document.getElementById('pig');
+  var tableEl = document.getElementById('table');
+  var rankOpenBtn = document.getElementById('rank-open-btn');
+
+  var btnFatdown = document.getElementById('btn-fatdown');
+  var btnExposure = document.getElementById('btn-exposure');
+  var btnCoinup = document.getElementById('btn-coinup');
+  var btnSlow = document.getElementById('btn-slow');
+  var costFatdown = document.getElementById('cost-fatdown');
+  var costExposure = document.getElementById('cost-exposure');
+  var costCoinup = document.getElementById('cost-coinup');
+  var costSlow = document.getElementById('cost-slow');
+
+  var gameoverScreen = document.getElementById('gameover-screen');
+  var goTitle = document.getElementById('go-title');
+  var goResult = document.getElementById('go-result');
+  var goBest = document.getElementById('go-best');
+  var goNewRecord = document.getElementById('go-newrecord');
+  var restartBtn = document.getElementById('restart-btn');
+  var goRankBtn = document.getElementById('go-rank-btn');
+
+  var flashLayer = document.getElementById('flash-layer');
+  var soundToggleBtn = document.getElementById('sound-toggle-btn');
+
+  var rankingScreen = document.getElementById('ranking-screen');
+  var rankingList = document.getElementById('ranking-list');
+  var rankCloseBtn = document.getElementById('rank-close-btn');
+
+  var settingsOpenBtn = document.getElementById('settings-open-btn');
+  var settingsScreen = document.getElementById('settings-screen');
+  var settingsNickname = document.getElementById('settings-nickname');
+  var settingsVersion = document.getElementById('settings-version');
+  var settingsCloseBtn = document.getElementById('settings-close-btn');
+  var logoutBtn = document.getElementById('logout-btn');
+  var versionTag = document.getElementById('version-tag');
+  versionTag.textContent = APP_VERSION;
+
+  // ===== 오디오 =====
+  var audioCtx = null;
+  var soundEnabled = true;
+  function playTone(freq, duration, type){
+    if(!soundEnabled) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = type || 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.16, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + duration);
+    } catch(e) {}
+  }
+
+  // ===== 대사 =====
+  var DIALOGUE = {
+    start: [
+      "{닉네임} 또 왔냐 꿀... 오늘은 못 뺏어갈걸.",
+      "저리 가라 꿀! 이건 내 저녁이다!",
+      "너 땜에 오늘도 다이어트 망하게 생겼다 꿀...",
+      "어디 한 번 해보자 이거 꿀.",
+      "손대지 마라 꿀, 이거 다 내 거다.",
+      "{닉네임}, 오늘은 각오해라 꿀.",
+      "배고파 죽겠는데 또 방해네 꿀.",
+      "이번엔 안 뺏길 거다 꿀!",
+      "나도 좀 먹고 살자 꿀...",
+      "잘 지켜봐라 꿀, 오늘은 다르다.",
+      "{닉네임} 왔으니 오늘도 시끄럽겠네 꿀."
+    ],
+    success: [
+      "야! 그거 내 거였다 꿀!",
+      "아깝다 꿀... 다 잡은 건데.",
+      "너 진짜 빠르다 꿀, 재수없게.",
+      "한 입만... 한 입만 주지 꿀.",
+      "또 뺏겼다 꿀... 열받네.",
+      "{닉네임} 너 이러기냐 꿀?",
+      "내 밥그릇에서 손 떼라 꿀!",
+      "억울하다 꿀, 진짜.",
+      "다음엔 못 뺏는다 꿀.",
+      "치사하게 빠르네 꿀...",
+      "그거 내가 찜한 거였는데 꿀.",
+      "아 진짜 배고픈데 꿀..."
+    ],
+    miss: [
+      "크으 맛있다 꿀! 고맙다 꿀!",
+      "굼뜨긴 꿀, 이건 내 거다!",
+      "한 입에 꿀꺽! 잘 먹었다 꿀!",
+      "{닉네임} 반응속도가 그게 뭐냐 꿀.",
+      "역시 내가 더 빠르지 꿀.",
+      "냠냠, 살로 가는 소리가 들린다 꿀.",
+      "더 놓쳐봐라 꿀, 나야 좋지.",
+      "이 맛에 산다 꿀!",
+      "놓칠 줄 알았다 꿀.",
+      "잘 먹었습니다 꿀!",
+      "이래야 배가 부르지 꿀.",
+      "역시 넌 안 될 놈이다 꿀."
+    ],
+    shop: [
+      "뭘 또 사는 거냐 꿀...",
+      "돈지랄 하네 꿀.",
+      "그런다고 내가 안 뺏길 것 같냐 꿀?",
+      "{닉네임} 준비 단단히 했네 꿀.",
+      "흥, 어디 해봐라 꿀.",
+      "돈만 있으면 다 되는 줄 아냐 꿀.",
+      "이래봤자다 꿀.",
+      "긴장되게 하네 꿀...",
+      "제법인데 꿀.",
+      "그거 산다고 봐줄 것 같냐 꿀."
+    ],
+    record: [
+      "이야... {닉네임} 오늘 좀 하네 꿀.",
+      "설마 신기록이냐 꿀... 재수없다.",
+      "인정한다 꿀, 오늘은 너가 이겼다.",
+      "다음엔 진짜 안 봐준다 꿀!",
+      "이번만이다 꿀, 다음엔 안 통해.",
+      "억울하지만 잘했다 꿀...",
+      "{닉네임} 무섭게 하네 꿀.",
+      "오늘따라 눈치가 빠르네 꿀.",
+      "기록 갱신이라니, 열받는다 꿀.",
+      "다음 판엔 진짜 각오해라 꿀."
+    ]
+  };
+  var lastIdx = {};
+  function say(category){
+    var arr = DIALOGUE[category];
+    if(!arr || !arr.length) return;
+    var idx;
+    do { idx = Math.floor(Math.random()*arr.length); } while (arr.length>1 && idx===lastIdx[category]);
+    lastIdx[category] = idx;
+    var text = arr[idx].split('{닉네임}').join(state.nickname);
+    speechBubble.textContent = text;
+  }
+
+  var GAMEOVER_TITLES = [
+    "다이어트 실패!",
+    "돼지 압승",
+    "결국 다 뺏겼다",
+    "오늘 밥상은 돼지 거였다",
+    "완패...",
+    "동하가 승리했다",
+    "지방으로 항복",
+    "밥그릇 사수 실패",
+    "동하 배터짐 주의보"
+  ];
+
+  // ===== 상점 설정 =====
+  var SHOP = {
+    fatdown: { baseCost: 80, mult: 1.7, effect: 20 },
+    exposure: { costs: [120,220,380], effect: 0.15, max: 3 },
+    coinup: { costs: [100,200,360], effect: 3, max: 3 },
+    slow: { costs: [150,280,480], effect: 0.15, max: 3 }
+  };
+
+  var FOOD_TIERS = [
+    { icons:['🍎','🥕','🍇','🥦'], hits:1, coin:10, fat:5 },
+    { icons:['🍞','🌭','🍕','🥐'], hits:1, coin:14, fat:10 },
+    { icons:['🍗','🥩','🍰','🍩'], hits:2, coin:20, fat:15 },
+    { icons:['🍔','🌮','🍜','🧁'], hits:3, coin:28, fat:20 }
+  ];
+
+  // ===== 상태 =====
+  function freshState(nickname, bestRecord){
+    return {
+      nickname: nickname,
+      bestRecord: bestRecord || 0,
+      coin: 0,
+      fat: 0,
+      elapsed: 0,
+      combo: 0,
+      running: false,
+      bossActive: false,
+      shopLv: { exposure:0, coinup:0, slow:0 },
+      fatdownCount: 0,
+      activeFoods: [],
+      occupied: new Array(9).fill(false),
+      bossTriggeredMarks: {}
+    };
+  }
+  var state = freshState('', 0);
+
+  var spawnTimer = null, tickTimer = null, bossBiteTimer = null;
+  var bossEl = null, bossSize = 100;
+
+  // ===== 그릇 9개 생성 =====
+  for (var i=0;i<9;i++){
+    var b = document.createElement('div');
+    b.className = 'bowl';
+    b.dataset.idx = i;
+    tableEl.appendChild(b);
+  }
+  var bowlEls = Array.prototype.slice.call(tableEl.querySelectorAll('.bowl'));
+
+  // ===== API =====
+  function apiCall(action, payload){
+    payload = payload || {};
+    payload.action = action;
+    return fetch(GAS_URL, { method:'POST', body: JSON.stringify(payload) })
+      .then(function(res){ return res.json(); })
+      .catch(function(err){ console.warn('API 오류', err); return { success:false }; });
+  }
+
+  // ===== 로그인 =====
+  loginBtn.addEventListener('click', handleLogin);
+  function handleLogin(){
+    var nickname = nicknameInput.value.trim();
+    var pin = pinInput.value.trim();
+    if(!/^[가-힣]{2,8}$/.test(nickname)){
+      loginError.textContent = '닉네임은 한글 2~8자로 입력해줘';
+      return;
+    }
+    if(!/^\d{4}$/.test(pin)){
+      loginError.textContent = 'PIN은 숫자 4자리로 입력해줘';
+      return;
+    }
+    loginError.textContent = '';
+    loginBtn.disabled = true;
+    loginBtn.textContent = '로그인 중...';
+    apiCall('login', { nickname: nickname, pin: pin }).then(function(data){
+      loginBtn.disabled = false;
+      loginBtn.textContent = '시작하기';
+      if(!data || !data.success){
+        loginError.textContent = (data && data.message) || '로그인에 실패했어. 다시 시도해줘';
+        return;
+      }
+      state = freshState(nickname, data.bestRecord || 0);
+      loginScreen.style.display = 'none';
+      gameScreen.style.display = 'flex';
+      apiCall('startRound', { nickname: nickname });
+      startRun();
+    });
+  }
+
+  // ===== 난이도 계산 =====
+  function difficultyFactor(){ return Math.max(0.4, 1 - SHOP.slow.effect*state.shopLv.slow); }
+  function scaledElapsed(){ return state.elapsed * difficultyFactor(); }
+  function currentTier(){
+    var e = scaledElapsed();
+    if (e < 20) return 0;
+    if (e < 50) return 1;
+    if (e < 95) return 2;
+    return 3;
+  }
+  function currentExposureMs(){
+    var e = scaledElapsed();
+    var base = Math.max(0.37, 1.05 - e*0.0056);
+    return (base + state.shopLv.exposure*SHOP.exposure.effect) * 1000;
+  }
+  function currentFallMs(){
+    var e = scaledElapsed();
+    return Math.max(0.75, 1.55 - e*0.0045) * 1000;
+  }
+  function currentSimultaneous(){
+    var e = scaledElapsed();
+    return Math.min(3, 1 + Math.floor(e/27));
+  }
+  function fatPenalty(tierIdx){
+    var base = FOOD_TIERS[tierIdx].fat;
+    var growth = 1 + state.elapsed/120;
+    return Math.round(base*growth);
+  }
+
+  // ===== 런 시작/재시작 =====
+  function startRun(){
+    state.coin = 0; state.fat = 0; state.elapsed = 0; state.combo = 0;
+    state.shopLv = { exposure:0, coinup:0, slow:0 };
+    state.fatdownCount = 0;
+    state.occupied = new Array(9).fill(false);
+    state.bossTriggeredMarks = {};
+    clearAllFoods();
+    updateHud();
+    updateShopUi();
+    say('start');
+    state.running = true;
+    scheduleTick();
+    scheduleSpawn();
+  }
+
+  function scheduleTick(){
+    tickTimer = setInterval(function(){
+      if(!state.running) return;
+      state.elapsed += 1;
+      updateHud();
+      checkBossTrigger();
+    }, 1000);
+  }
+
+  function scheduleSpawn(){
+    if(!state.running) return;
+    var delay = 300 + Math.random()*300;
+    spawnTimer = setTimeout(function(){
+      trySpawn();
+      scheduleSpawn();
+    }, delay);
+  }
+
+  function clearAllFoods(){
+    state.activeFoods.forEach(function(f){
+      if(f.timeout) clearTimeout(f.timeout);
+      if(f.el && f.el.parentNode) f.el.parentNode.removeChild(f.el);
+    });
+    state.activeFoods = [];
+    state.occupied = new Array(9).fill(false);
+  }
+
+  // ===== 스폰/낙하 =====
+  function trySpawn(){
+    if(state.bossActive) return;
+    var need = currentSimultaneous();
+    if(state.activeFoods.length >= need) return;
+    var free = [];
+    for(var i=0;i<9;i++){ if(!state.occupied[i]) free.push(i); }
+    if(free.length === 0) return;
+    var bowlIdx = free[Math.floor(Math.random()*free.length)];
+    spawnFood(bowlIdx);
+  }
+
+  function spawnFood(bowlIdx){
+    var tierIdx = currentTier();
+    var tier = FOOD_TIERS[tierIdx];
+    var icon = tier.icons[Math.floor(Math.random()*tier.icons.length)];
+
+    var el = document.createElement('div');
+    el.className = 'food';
+    el.textContent = icon;
+    board.appendChild(el);
+
+    var bowlRect = bowlEls[bowlIdx].getBoundingClientRect();
+    var boardRect = board.getBoundingClientRect();
+    var targetLeft = bowlRect.left - boardRect.left + bowlRect.width/2;
+    var targetTop = bowlRect.top - boardRect.top + bowlRect.height/2;
+
+    el.style.left = targetLeft + 'px';
+    el.style.top = '-30px';
+
+    var fallMs = currentFallMs();
+    var food = {
+      el: el, bowlIdx: bowlIdx, tierIdx: tierIdx, hitsLeft: tier.hits, totalHits: tier.hits,
+      landed: false, resolved: false, timeout: null
+    };
+    state.activeFoods.push(food);
+    state.occupied[bowlIdx] = true;
+
+    requestAnimationFrame(function(){
+      el.style.transition = 'top ' + (fallMs/1000) + 's linear';
+      requestAnimationFrame(function(){ el.style.top = targetTop + 'px'; });
+    });
+
+    setTimeout(function(){
+      if(!state.running) return;
+      food.landed = true;
+      el.classList.add('landed');
+      el.addEventListener('click', function(){ onFoodClick(food); });
+      var expMs = currentExposureMs();
+      food.timeout = setTimeout(function(){ onFoodMiss(food); }, expMs);
+    }, fallMs);
+  }
+
+  function removeFood(food){
+    var idx = state.activeFoods.indexOf(food);
+    if(idx>=0) state.activeFoods.splice(idx,1);
+    state.occupied[food.bowlIdx] = false;
+    if(food.el && food.el.parentNode) food.el.parentNode.removeChild(food.el);
+  }
+
+  function onFoodClick(food){
+    if(!state.running || !food.landed || food.resolved) return;
+    food.hitsLeft -= 1;
+    if(food.hitsLeft > 0){
+      var scale = 0.4 + 0.6*(food.hitsLeft/food.totalHits);
+      food.el.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
+      playTone(520, 0.05, 'square');
+      return;
+    }
+    food.resolved = true;
+    if(food.timeout) clearTimeout(food.timeout);
+    var tier = FOOD_TIERS[food.tierIdx];
+    state.combo += 1;
+    var comboBonus = Math.min(state.combo - 1, 10) * 2;
+    var coinGain = tier.coin + state.shopLv.coinup*SHOP.coinup.effect + comboBonus;
+    state.coin += coinGain;
+    var rect = food.el.getBoundingClientRect();
+    var boardRect = board.getBoundingClientRect();
+    reactSuccess(rect.left - boardRect.left, rect.top - boardRect.top, coinGain, state.combo);
+    say('success');
+    removeFood(food);
+    updateHud();
+  }
+
+  function onFoodMiss(food){
+    if(!state.running || food.resolved) return;
+    food.resolved = true;
+    state.combo = 0;
+    var pen = fatPenalty(food.tierIdx);
+    state.fat = Math.min(100, state.fat + pen);
+    var rect = food.el.getBoundingClientRect();
+    var boardRect = board.getBoundingClientRect();
+    reactMiss(rect.left - boardRect.left, rect.top - boardRect.top);
+    say('miss');
+    removeFood(food);
+    updateHud();
+    checkDeath();
+  }
+
+  // ===== 이펙트 =====
+  function reactSuccess(x, y, coinGain, combo){
+    board.classList.remove('shake'); void board.offsetWidth; board.classList.add('shake');
+    var label = combo >= 3 ? ('+' + coinGain + ' 콤보x' + combo) : ('+' + coinGain);
+    spawnPopup(x, y, label, '#ffab00');
+    spawnParticles(x, y);
+    playTone(880 + Math.min(combo,10)*15, 0.1, 'sine');
+  }
+  function reactMiss(x, y){
+    playTone(180, 0.15, 'sawtooth');
+    spawnPopup(x, y, '냠', '#ef5350');
+    flashLayer.classList.remove('flash'); void flashLayer.offsetWidth; flashLayer.classList.add('flash');
+  }
+  function spawnPopup(x, y, text, color){
+    var p = document.createElement('div');
+    p.className = 'popup';
+    p.textContent = text;
+    p.style.left = x + 'px';
+    p.style.top = y + 'px';
+    p.style.color = color;
+    board.appendChild(p);
+    setTimeout(function(){ if(p.parentNode) p.parentNode.removeChild(p); }, 850);
+  }
+  function spawnParticles(x, y){
+    for(var i=0;i<6;i++){
+      var pt = document.createElement('div');
+      pt.className = 'particle';
+      pt.style.left = x + 'px';
+      pt.style.top = y + 'px';
+      var ang = Math.random()*Math.PI*2, dist = 20+Math.random()*20;
+      pt.style.setProperty('--dx', Math.cos(ang)*dist + 'px');
+      pt.style.setProperty('--dy', Math.sin(ang)*dist + 'px');
+      board.appendChild(pt);
+      (function(el){ setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 520); })(pt);
+    }
+  }
+
+  // ===== 보스전 =====
+  function checkBossTrigger(){
+    var mark = Math.floor(state.elapsed/60)*60;
+    if(mark > 0 && state.elapsed % 60 === 0 && !state.bossTriggeredMarks[mark] && !state.bossActive){
+      state.bossTriggeredMarks[mark] = true;
+      triggerBoss();
+    }
+  }
+
+  function triggerBoss(){
+    state.bossActive = true;
+    if(spawnTimer) clearTimeout(spawnTimer);
+    clearAllFoods();
+    speechBubble.textContent = "오늘은 특별식이다 꿀!! 대왕버거 내놔라!!";
+
+    bossSize = 100;
+    bossEl = document.createElement('div');
+    bossEl.className = 'boss-food';
+    bossEl.innerHTML = '<span class="emoji">🍔</span><div class="boss-hpbar"><div class="boss-hpbar-fill"></div></div>';
+    var tableRect = tableEl.getBoundingClientRect();
+    var boardRect = board.getBoundingClientRect();
+    var targetLeft = tableRect.left - boardRect.left + tableRect.width/2;
+    var targetTop = tableRect.top - boardRect.top + tableRect.height/2;
+
+    bossEl.style.left = targetLeft + 'px';
+    bossEl.style.top = '-80px';
+    board.appendChild(bossEl);
+    updateBossVisual();
+
+    var fallMs = 900;
+    requestAnimationFrame(function(){
+      bossEl.style.transition = 'top ' + (fallMs/1000) + 's ease-in';
+      requestAnimationFrame(function(){ bossEl.style.top = targetTop + 'px'; });
+    });
+
+    setTimeout(function(){
+      if(!state.bossActive || !bossEl) return;
+
+      bossEl.querySelector('.emoji').addEventListener('click', function(){
+        if(!state.bossActive) return;
+        bossSize -= 10;
+        playTone(700, 0.07, 'triangle');
+        spawnParticles(parseFloat(bossEl.style.left), parseFloat(bossEl.style.top));
+        updateBossVisual();
+        if(bossSize <= 0) endBoss();
+      });
+
+      bossBiteTimer = setInterval(function(){
+        if(!state.bossActive) return;
+        bossSize -= 6;
+        state.fat = Math.min(100, state.fat + 4);
+        updateHud();
+        updateBossVisual();
+        checkDeath();
+        if(bossSize <= 0) endBoss();
+      }, 1000);
+    }, fallMs);
+  }
+
+  function updateBossVisual(){
+    if(!bossEl) return;
+    var pct = Math.max(0, bossSize);
+    var tableRect = tableEl.getBoundingClientRect();
+    var maxSize = Math.min(tableRect.width, tableRect.height) * 0.98;
+    var minSize = maxSize * 0.15;
+    var size = minSize + (maxSize - minSize) * (pct/100);
+    bossEl.querySelector('.emoji').style.fontSize = size + 'px';
+    bossEl.querySelector('.boss-hpbar-fill').style.width = pct + '%';
+  }
+
+  function endBoss(){
+    state.bossActive = false;
+    if(bossBiteTimer) clearInterval(bossBiteTimer);
+    if(bossEl && bossEl.parentNode) bossEl.parentNode.removeChild(bossEl);
+    bossEl = null;
+    if(state.running){
+      say('miss');
+      scheduleSpawn();
+    }
+  }
+
+  // ===== 사망 처리 =====
+  function checkDeath(){
+    if(state.fat >= 100 && state.running){
+      state.fat = 100;
+      updateHud();
+      gameOver();
+    }
+  }
+
+  function gameOver(){
+    state.running = false;
+    if(spawnTimer) clearTimeout(spawnTimer);
+    if(tickTimer) clearInterval(tickTimer);
+    if(bossBiteTimer) clearInterval(bossBiteTimer);
+    if(bossEl && bossEl.parentNode) bossEl.parentNode.removeChild(bossEl);
+    bossEl = null;
+    clearAllFoods();
+    playTone(140, 0.35, 'square');
+    pigEl.classList.add('dead');
+
+    var survival = Math.floor(state.elapsed);
+    goTitle.textContent = GAMEOVER_TITLES[Math.floor(Math.random()*GAMEOVER_TITLES.length)];
+    goResult.textContent = '이번 판 생존시간: ' + survival + '초';
+    goBest.textContent = '최고기록 확인 중...';
+    goNewRecord.style.display = 'none';
+    gameoverScreen.classList.add('show');
+
+    apiCall('endRound', { nickname: state.nickname, survivalSeconds: survival }).then(function(data){
+      var isNew = data && data.isNewRecord;
+      var best = (data && typeof data.bestRecord === 'number') ? data.bestRecord : Math.max(state.bestRecord, survival);
+      state.bestRecord = best;
+      goBest.textContent = '내 최고기록: ' + best + '초';
+      goNewRecord.style.display = isNew ? 'block' : 'none';
+      if(isNew) playTone(660, 0.2, 'sine');
+      updateHud();
+    });
+  }
+
+  restartBtn.addEventListener('click', function(){
+    gameoverScreen.classList.remove('show');
+    pigEl.classList.remove('dead');
+    apiCall('startRound', { nickname: state.nickname });
+    startRun();
+  });
+
+  // ===== 상점 =====
+  function fatdownCost(){ return Math.round(SHOP.fatdown.baseCost * Math.pow(SHOP.fatdown.mult, state.fatdownCount)); }
+
+  btnFatdown.addEventListener('click', function(){
+    var cost = fatdownCost();
+    if(state.coin < cost || !state.running) return;
+    state.coin -= cost;
+    state.fat = Math.max(0, state.fat - SHOP.fatdown.effect);
+    state.fatdownCount += 1;
+    say('shop');
+    updateHud(); updateShopUi();
+  });
+  btnExposure.addEventListener('click', function(){ buyLeveled('exposure', SHOP.exposure); });
+  btnCoinup.addEventListener('click', function(){ buyLeveled('coinup', SHOP.coinup); });
+  btnSlow.addEventListener('click', function(){ buyLeveled('slow', SHOP.slow); });
+
+  function buyLeveled(key, cfg){
+    if(!state.running) return;
+    var lv = state.shopLv[key];
+    if(lv >= cfg.max) return;
+    var cost = cfg.costs[lv];
+    if(state.coin < cost) return;
+    state.coin -= cost;
+    state.shopLv[key] += 1;
+    say('shop');
+    updateHud(); updateShopUi();
+  }
+
+  function updateShopUi(){
+    costFatdown.textContent = fatdownCost() + '원';
+    updateLeveledBtn('exposure', costExposure, btnExposure, SHOP.exposure);
+    updateLeveledBtn('coinup', costCoinup, btnCoinup, SHOP.coinup);
+    updateLeveledBtn('slow', costSlow, btnSlow, SHOP.slow);
+  }
+  function updateLeveledBtn(key, costEl, btnEl, cfg){
+    var lv = state.shopLv[key];
+    if(lv >= cfg.max){
+      costEl.textContent = 'MAX';
+      btnEl.disabled = true;
+    } else {
+      costEl.textContent = cfg.costs[lv] + '원';
+      btnEl.disabled = false;
+    }
+  }
+
+  // ===== HUD =====
+  function updateHud(){
+    hudCoin.textContent = Math.floor(state.coin);
+    hudBest.textContent = state.elapsed + '초 · 최고 ' + state.bestRecord + '초';
+    fatBar.style.width = state.fat + '%';
+  }
+
+  // ===== 랭킹 =====
+  rankOpenBtn.addEventListener('click', openRanking);
+  goRankBtn.addEventListener('click', openRanking);
+  rankCloseBtn.addEventListener('click', function(){ rankingScreen.classList.remove('show'); });
+
+  function openRanking(){
+    rankingList.innerHTML = '불러오는 중...';
+    rankingScreen.classList.add('show');
+    apiCall('ranking', { limit: 20 }).then(function(data){
+      if(!data || !data.success){ rankingList.innerHTML = '랭킹을 불러오지 못했어'; return; }
+      rankingList.innerHTML = '';
+      data.ranking.forEach(function(row, i){
+        var div = document.createElement('div');
+        div.className = 'row' + (row.nickname === state.nickname ? ' me' : '');
+        div.innerHTML = '<span>' + (i+1) + '. ' + row.nickname + '</span><span>' + row.bestRecord + '초</span>';
+        rankingList.appendChild(div);
+      });
+      if(data.ranking.length === 0) rankingList.innerHTML = '아직 기록이 없어';
+    });
+  }
+
+  // ===== 설정/로그아웃 =====
+  settingsOpenBtn.addEventListener('click', function(){
+    settingsNickname.textContent = '닉네임: ' + state.nickname;
+    settingsVersion.textContent = '버전 ' + APP_VERSION;
+    settingsScreen.classList.add('show');
+  });
+  settingsCloseBtn.addEventListener('click', function(){ settingsScreen.classList.remove('show'); });
+  logoutBtn.addEventListener('click', logout);
+  soundToggleBtn.addEventListener('click', function(){
+    soundEnabled = !soundEnabled;
+    soundToggleBtn.textContent = soundEnabled ? '사운드 끄기' : '사운드 켜기';
+  });
+
+  function logout(){
+    state.running = false;
+    if(spawnTimer) clearTimeout(spawnTimer);
+    if(tickTimer) clearInterval(tickTimer);
+    if(bossBiteTimer) clearInterval(bossBiteTimer);
+    if(bossEl && bossEl.parentNode) bossEl.parentNode.removeChild(bossEl);
+    bossEl = null;
+    clearAllFoods();
+    settingsScreen.classList.remove('show');
+    rankingScreen.classList.remove('show');
+    gameoverScreen.classList.remove('show');
+    pigEl.classList.remove('dead');
+    gameScreen.style.display = 'none';
+    nicknameInput.value = '';
+    pinInput.value = '';
+    loginError.textContent = '';
+    loginScreen.style.display = 'flex';
+  }
+
+})();
+</script>
+</body>
+</html>
